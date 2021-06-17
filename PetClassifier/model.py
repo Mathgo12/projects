@@ -130,16 +130,14 @@ test_datasetiter = test_gen.flow_from_dataframe(
     batch_size=32,
     shuffle=False
 )
-
-predict = model.predict(test_datasetiter, steps=np.ceil(nb_samples/32))
-pred_df = pd.DataFrame(data={'X': test_filenames, 'Y': predict.reshape(-1)})
-
 def convertLabelToCategorical(e):
     if(e >= 0.5):
         return 1
     else:
         return 0
 
+predict = model.predict(test_datasetiter, steps=np.ceil(nb_samples/32))
+pred_df = pd.DataFrame(data={'X': test_filenames, 'Y': predict.reshape(-1)})
 pred_df['Y'] = pred_df['Y'].apply(convertLabelToCategorical)
 
 def displayPreds(data_iter, pred_df):
@@ -149,10 +147,10 @@ def displayPreds(data_iter, pred_df):
     for img in data_iter:
         temp = cv2.resize(img[0,:,:,:], (400,400))
         temp = cv2.cvtColor(temp, cv2.COLOR_RGB2BGR)
-        cv2.putText(temp, str(pred_df['Y'][img_idx]), (50,50), cv2.FONT_HERSHEY_DUPLEX, 2, (255,0,0), 4)
+        cv2.putText(temp, str(pred_df['Y'][img_idx]),(50,50),cv2.FONT_HERSHEY_DUPLEX,2,(255,0,0),4)
         cv2.imshow('IMG', temp)
         key = cv2.waitKey(0)
-        if key == 27:
+        if key==27:
             cv2.destroyAllWindows()
             break
         img_idx+=1
@@ -168,12 +166,21 @@ import_preddf['Y'] = import_preddf['Y'].apply(convertLabelToCategorical)
 
 displayPreds(test_datasetiter, import_preddf)
 
+#  Test Images from Online
+online_testfolder = folderpath + '/onlineTestImages/'
+online_preddf = {}
+for filename in os.listdir(online_testfolder):
+    temp_img = cv2.imread(online_testfolder + filename, cv2.IMREAD_COLOR)
+    temp_img = cv2.resize(temp_img, (150,150), interpolation=cv2.INTER_CUBIC)
+    temp_img = np.expand_dims(temp_img, axis=0)
+    temp_img = temp_img / 255.0
+    cv2.imshow('IMG',temp_img[0,:,:,:])
+    online_pred = imported_model.predict(temp_img)
+    online_pred = list(map(convertLabelToCategorical,online_pred))
 
+    online_preddf[str(filename)] = online_pred
 
-
-
-
-
+#  {'cat_test.jpg': [0], 'dog_test.jpg': [1]}
 
 
 
